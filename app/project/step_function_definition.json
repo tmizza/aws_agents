@@ -1,0 +1,58 @@
+{
+  "Comment": "Orchestration Workflow",
+  "StartAt": "Agent1",
+  "States": {
+    "Agent1": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:agent1_lambda", # Replace with your ARN
+      "Next": "Agent2",
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "HandleError"
+        }
+      ]
+    },
+    "Agent2": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:us-east-1:123456789012:function:agent2_lambda", # Replace with your ARN
+      "InputPath": "$.Payload",
+      "ResultPath": "$.agent2Output",
+      "Next": "CombineResponses",
+      "Retry": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "IntervalSeconds": 1,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Catch": [
+        {
+          "ErrorEquals": ["States.ALL"],
+          "Next": "HandleError"
+        }
+      ]
+    },
+    "CombineResponses": {
+      "Type": "Pass",
+      "Parameters": {
+        "finalResponse": "Hello world, how are you"
+      },
+      "End": true
+    },
+    "HandleError": {
+      "Type": "Fail",
+      "Cause": "External API call failed",
+      "Error": "Error in Step Function execution"
+    }
+  }
+}
